@@ -1,0 +1,51 @@
+//@version=4
+strategy("RSI Engulfing Candle Strategy", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+// Set dates for backtest
+fromMonth = input(defval = 1, title = "From Month", minval = 1, maxval = 12)
+fromDay   = input(defval = 1, title = "From Day",   minval = 1, maxval = 31)
+fromYear  = input(defval = 2000, title = "From Year",  minval = 1970, maxval = 2200)
+toMonth   = input(defval = 2, title = "To Month",   minval = 1, maxval = 12)
+toDay     = input(defval = 25, title = "To Day",     minval = 1, maxval = 31)
+toYear    = input(defval = 2023, title = "To Year",  minval = 1970, maxval = 2200)
+
+// RSI settings
+rsiLength       = input(title="RSI Length", defval=10, minval=1)
+rsiOverBought   = input(title="RSI Overbought Level", defval=55, minval=1)
+rsiOverSold     = input(title="RSI Oversold Level", defval=50, minval=1)
+
+// EMA settings
+ema1 = input(title="EMA 1 Length", defval=8, minval=1)
+ema2 = input(title="EMA 2 Length", defval=20, minval=1)
+
+// Get RSI value
+rsiValue = rsi(close, rsiLength)
+
+// Check for bullish and bearish engulfing candles
+bullishCandle = close >= open[1] and close[1] < open[1]
+bearishCandle = close <= open[1] and close[1] > open[1]
+
+// Check for RSI conditions
+isRSIOB = rsiValue >= rsiOverBought
+isRSIOS = rsiValue <= rsiOverSold
+
+// Check for EMA conditions
+ema1Condition = close > ema(close, ema1)
+ema2Condition = close > ema(close, ema2)
+
+// Define trade signals
+buySignal = (isRSIOS or isRSIOS[1] or isRSIOS[2]) and bullishCandle and ema1Condition and ema2Condition
+sellSignal = (isRSIOB or isRSIOB[1] or isRSIOB[2]) and bearishCandle
+
+// Submit buy and sell orders
+if buySignal
+    strategy.entry("Buy", strategy.long)
+if sellSignal
+    strategy.close("Buy")
+    strategy.entry("Sell", strategy.short)
+
+// Plot signals on the chart
+plotshape(buySignal, title="Buy Signal", style=shape.triangleup, location=location.belowbar, color=color.green, text="Buy")
+plotshape(sellSignal, title="Sell Signal", style=shape.triangledown, location=location.abovebar, color=color.red, text="Sell")
+
+// Set dates for backtest
+fromDate = timestamp(fromYear, fromMonth, fromDay
